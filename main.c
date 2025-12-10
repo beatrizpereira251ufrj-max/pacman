@@ -485,26 +485,38 @@ int main(void){
             checar_colisoes(&E);
 
             // trocar de fase quando pellets zerarem
-            if(E.pellets <= 0){
+           if(E.pellets <= 0){
                 E.nivel++;
-                if(E.nivel == 2){ // não perite a evolucao de mapas (1.8)
-                    // tenta carregar mapa2
-                    free(E.mapa); free(E.fant);
-                    Pacman ptmp = E.pac; Fantasma *fv = NULL; int nf=0, pel=0;
-                    char *m = ler_mapa(MAPA2_FILE, &ptmp, &fv, &nf, &pel);
-                    if(m){
-                        E.mapa = m; E.pac = ptmp; E.fant = fv; E.nF = nf; E.pellets = pel;
-                        // garantir que o timer n�o impe�a movimento
-                        E.lastPac = GetTime();
-                    } else {
-                        // se mapa2 n�o existe, reinicia mapa1
-                        novo_jogo(&E, MAPA1_FILE);
-                    }
+                
+                char proximo_mapa[64]; // para o nome do proximo arquivo
+                
+                snprintf(proximo_mapa, sizeof(proximo_mapa), "mapas/mapa%d.txt", E.nivel);
+                // carrega o proximo mapa
+                free(E.mapa); free(E.fant);
+                Pacman ptmp = E.pac; Fantasma *fv = NULL; int nf=0, pel=0;
+                // ler o arquivo 
+                char *m = ler_mapa(proximo_mapa, &ptmp, &fv, &nf, &pel);
+                
+                if(m){
+                    //carrega o proximo nivel
+                    E.mapa = m; E.pac = ptmp; E.fant = fv; E.nF = nf; E.pellets = pel;
+                    
+                    E.pac.pos = E.pac.inicio;
+                    E.pac.prox_dir = -1;
+                    
+                    E.power = false;
+                    
+                    E.lastPac = GetTime();
+                    
                 } else {
-                    // se houver um n�vel 3 (n�o exigido), ou reiniciar
+                    // não existe proximo
                     novo_jogo(&E, MAPA1_FILE);
+                    
+                    // pontuação bônus por zerar
+                    E.pac.pontuacao += 5000;
                 }
             }
+
 
             // desenhar mapa, entidades e HUD
             desenhar_mapa(&E);
